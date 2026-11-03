@@ -1,0 +1,118 @@
+name: 'AP2 - 10 clics del pulsador'
+version: 1
+author: 'Sistemas Digitales UNL - AP2'
+
+steps:
+  - wait-serial: 'AP2 lista. Presiona el pulsador.'
+  - delay: 500ms
+  # clic 1
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 2
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 3
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 4
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 5
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 6
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 7
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 8
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 9
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  # clic 10
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 200ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - delay: 400ms
+  - delay: 1000ms
