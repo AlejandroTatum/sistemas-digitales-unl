@@ -1,0 +1,58 @@
+name: 'AP4 - 10 toques (intento 2)'
+version: 1
+author: 'Sistemas Digitales UNL - AP4'
+
+steps:
+  - wait-serial: 'Codigo 2: interrupcion'
+  - delay: 700ms
+  # toque 1
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 2
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 3
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 4
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 5
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 6
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 7
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 8
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 9
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  # toque 10
+  - set-control: { part-id: btn1, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btn1, control: pressed, value: 0 }
+  - delay: 930ms
+  - delay: 4500ms
