@@ -30,7 +30,7 @@ Enlaces del trabajo:
 
 - Proyecto en Wokwi del Código 1 (sondeo): https://wokwi.com/projects/479994010623459329
 - Proyecto en Wokwi del Código 2 (interrupción): https://wokwi.com/projects/479992357138333697
-- Repositorio de GitHub, carpeta AP4 con los dos códigos, el diagram.json, las capturas del Monitor Serie y la foto del montaje: https://github.com/AlejandroTatum/sistemas-digitales-unl/tree/main/unidad-1/ape-4-interrupciones-esp32/AP4
+- Repositorio de GitHub, carpeta AP4 con los dos códigos, el diagram.json, las capturas del Monitor Serie y la foto del montaje: https://github.com/AlejandroTatum/sistemas-digitales-unl/tree/main/unidad-1/apes/ape-4-interrupciones-esp32/AP4
 
 # Resultados
 

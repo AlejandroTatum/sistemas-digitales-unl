@@ -1,6 +1,6 @@
 # APE 4 — Sensor de puerta con interrupciones externas en el ESP32
 
-[← Volver a la Unidad 1](../README.md)
+[← Volver a la Unidad 1](../../README.md)
 
 Semana 4 · Un pulsador (sensor de puerta) y un LED (luz de alarma) detectan la apertura mediante una interrupción externa del ESP32. Se comprueba con mediciones por qué la interrupción no pierde eventos que el sondeo sí pierde y por qué hace falta el antirrebote.
 

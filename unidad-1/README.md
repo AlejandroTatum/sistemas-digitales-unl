@@ -4,13 +4,22 @@ Resultado de aprendizaje **R1**: diseña arquitectura de microcontroladores.
 
 [← Volver al inicio](../README.md)
 
+## Contenido
+
+| Carpeta | Qué contiene |
+| --- | --- |
+| [apes/](apes) | Prácticas entregadas (APE) |
+| [apuntes/](apuntes) | Resúmenes de clase y guías de estudio |
+
 ## Prácticas
+
+Índice completo en [apes/](apes).
 
 | Semana | Práctica | Tema | Carpeta |
 | --- | --- | --- | --- |
-| 1 | APE 1 | Uso de Wokwi y Microchip Studio en microcontroladores AVR: arquitectura, puertos de E/S y operaciones a nivel de bit | [ape-1-avr-wokwi-microchip-studio](ape-1-avr-wokwi-microchip-studio) |
-| 2 | APE 2 | Juego de luces interactivo con ESP32 | [ape-2-juego-luces-esp32](ape-2-juego-luces-esp32) |
-| 4 | APE 4 | Sensor de puerta con interrupciones externas en el ESP32 | [ape-4-interrupciones-esp32](ape-4-interrupciones-esp32) |
+| 1 | APE 1 | Uso de Wokwi y Microchip Studio en microcontroladores AVR: arquitectura, puertos de E/S y operaciones a nivel de bit | [ape-1-avr-wokwi-microchip-studio](apes/ape-1-avr-wokwi-microchip-studio) |
+| 2 | APE 2 | Juego de luces interactivo con ESP32 | [ape-2-juego-luces-esp32](apes/ape-2-juego-luces-esp32) |
+| 4 | APE 4 | Sensor de puerta con interrupciones externas en el ESP32 | [ape-4-interrupciones-esp32](apes/ape-4-interrupciones-esp32) |
 
 ## Apuntes de estudio
 
