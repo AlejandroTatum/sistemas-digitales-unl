@@ -3,31 +3,30 @@
 | | |
 | --- | --- |
 | **Asignatura** | Sistemas Digitales |
-| **Docente** | Por definir |
+| **Carrera** | Computación · 5.º ciclo |
+| **Docente** | Ing. Luis Sinche Cueva, Mg. |
 | **Estudiante** | Alejandro Padilla |
 
-Repositorio con las prácticas y entregas de la asignatura.
+Repositorio con las prácticas entregadas y los apuntes de estudio de la asignatura, organizado por unidad.
 
-## Prácticas
+## Unidades
 
-| Unidad | Práctica | Tema | Carpeta |
-| --- | --- | --- | --- |
-| — | Práctica | Uso de Wokwi y Microchip Studio en microcontroladores AVR: arquitectura, puertos de E/S y operaciones a nivel de bit | [uso-de-wokwi-y-microchip-studio-...](uso-de-wokwi-y-microchip-studio-en-microcontroladores-avr-arquitectura-puertos-de-e-s-y-operaciones-a-nivel-de-bit) |
-| — | APE 2 | Juego de luces con ESP32 (Wokwi) | [ape-2-juego-luces-esp32](ape-2-juego-luces-esp32) |
-
-## Apuntes de estudio
-
-| Unidad | Contenido | Carpeta |
+| Unidad | Tema | Carpeta |
 | --- | --- | --- |
-| 1 | Resúmenes con diagramas de flujo de las semanas 1 a 4 y repaso para la prueba | [unidad-1/apuntes](unidad-1/apuntes) |
+| 1 | Microcontroladores para sistemas embebidos | [unidad-1](unidad-1) |
 
-## Contenido de cada práctica
+## Estructura
 
-Cada práctica vive en su propia carpeta y contiene:
+```text
+unidad-<n>/
+├── README.md          Índice de la unidad
+├── ape-<m>-<tema>/    Una carpeta por práctica entregada
+└── apuntes/           Resúmenes de clase y guías de estudio
+```
 
-| Elemento | Descripción |
+Cada unidad separa dos tipos de contenido:
+
+| Tipo | Qué contiene |
 | --- | --- |
-| `README.md` | Proceso seguido para resolver la práctica: iteraciones, correcciones y resultados. |
-| `documento/` | Informe entregado (PDF) y su archivo editable. |
-| `referencias.bib` | Bibliografía del informe en formato BibTeX, cuando aplica. |
-| `codigo/` | Implementación o archivos de simulación, cuando la práctica los requiere. |
+| **Prácticas** (`ape-<m>-<tema>/`) | Lo entregado en cada Actividad Práctico-Experimental: `README.md` con el proceso, `documento/` con el informe y, cuando aplica, el código y la simulación. |
+| **Apuntes** (`apuntes/`) | Material de estudio propio: resúmenes de las clases en Markdown y guías PDF con diagramas. No forman parte de ninguna entrega. |

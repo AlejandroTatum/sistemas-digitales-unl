@@ -1,6 +1,10 @@
-# APE 2 — Juego de luces con ESP32
+# APE 2 — Juego de luces interactivo con ESP32
 
-Simulación en Wokwi con un ESP32 y 4 LEDs (GPIO 16 a 19).
+[← Volver a la Unidad 1](../README.md)
+
+Semana 2 · Simulación en Wokwi con un ESP32 y 4 LEDs (GPIO 16 a 19).
+
+## Contenido
 
 | Carpeta | Contenido |
 | --- | --- |
