@@ -15,6 +15,12 @@ Repositorio con las prácticas y entregas de la asignatura.
 | — | Práctica | Uso de Wokwi y Microchip Studio en microcontroladores AVR: arquitectura, puertos de E/S y operaciones a nivel de bit | [uso-de-wokwi-y-microchip-studio-...](uso-de-wokwi-y-microchip-studio-en-microcontroladores-avr-arquitectura-puertos-de-e-s-y-operaciones-a-nivel-de-bit) |
 | — | APE 2 | Juego de luces con ESP32 (Wokwi) | [ape-2-juego-luces-esp32](ape-2-juego-luces-esp32) |
 
+## Apuntes de estudio
+
+| Unidad | Contenido | Carpeta |
+| --- | --- | --- |
+| 1 | Resúmenes con diagramas de flujo de las semanas 1 a 4 y repaso para la prueba | [unidad-1/apuntes](unidad-1/apuntes) |
+
 ## Contenido de cada práctica
 
 Cada práctica vive en su propia carpeta y contiene:
