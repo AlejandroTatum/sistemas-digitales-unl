@@ -1,325 +1,277 @@
 # S4 — Interrupciones externas en el ESP32
 
 > Semana 4 · Resultado de aprendizaje R1. Se usa en la AP4 (sistema de alerta doméstica).
-> Fuente: `S4_Interrupciones_Externas_ESP32.pdf`.
 
-## Idea central en una línea
+## Idea central
 
-Un botón (como en la AP2) que **avisa solo** por interrupción (como el timer de la AP3): la ISR debe ser **corta, estar en IRAM, usar variables `volatile` y el patrón bandera**, para que **ningún evento se pierda**.
+Un botón que **avisa solo** por interrupción. La ISR debe ser **corta, estar en IRAM, usar variables `volatile` y el patrón bandera** para que ningún evento se pierda.
+
+```mermaid
+flowchart LR
+    A["Botón<br/>FALLING"] --> B["Periférico GPIO<br/>detecta en hardware"]
+    B --> C["ISR<br/>IRAM_ATTR y antirrebote"]
+    C --> D["Bandera<br/>volatile"]
+    D --> E["loop<br/>trabajo pesado"]
+```
 
 ## Glosario
 
-| Término | Qué significa |
+| Término | Significado |
 | --- | --- |
-| **Sondeo (polling)** | Preguntar una y otra vez, en `loop()`, si algo ya pasó. |
-| **Interrupción** | Aviso del hardware que pausa el programa para atender algo urgente. |
-| **Interrupción externa** | Interrupción cuyo aviso llega desde fuera del chip, por un pin. |
-| **ISR** | *Interrupt Service Routine*: la función que se ejecuta al llegar el aviso. |
-| **Flanco** | El instante en que una señal cambia de 0 a 1 o de 1 a 0. |
-| **Rebote** | Varios cambios falsos y rapidísimos que produce un botón mecánico. |
-| **Compilador** | Traduce tu C a instrucciones del chip; intenta ahorrar pasos. |
-| **Registro de la CPU** | Casillas muy rápidas dentro de la CPU donde trabaja con copias de datos. |
-| **Flash** | Memoria grande y lenta, fuera del núcleo, donde se guarda el programa. |
-| **SRAM / IRAM** | Memoria rápida dentro del chip. IRAM es la parte para instrucciones. |
-| **Caché** | Copia pequeña y rápida de lo que la CPU leyó hace poco de la flash. |
-| **Watchdog** | "Perro guardián": reinicia el chip si algo se queda trabado mucho tiempo. |
+| **Sondeo (polling)** | Leer el pin una y otra vez en `loop()` para ver si algo cambió. |
+| **Interrupción** | Aviso del hardware que pausa el programa para atender un evento. |
+| **Interrupción externa** | Interrupción cuyo aviso llega por un pin. |
+| **ISR** | Función que se ejecuta al llegar el aviso. |
+| **Flanco** | Instante en que una señal cambia de 0 a 1 o de 1 a 0. |
+| **Rebote** | Cambios falsos y muy rápidos de un botón mecánico. |
+| **Watchdog** | Mecanismo que reinicia el chip si el programa se queda trabado. |
 
-## Bloque 1 · Sondeo vs. interrupción
+## 1. Sondeo e interrupción
 
 | Sondeo | Interrupción |
 | --- | --- |
-| Mirar por la ventana cada 5 min: "¿ya llegó el paquete?" | Instalar un **timbre**: el aviso llega solo. |
-| `loop()` lee el pin en cada vuelta. | El **periférico GPIO** vigila el pin en hardware. |
-| Si `loop()` está ocupado (`delay(2000)`), **el toque se pierde**. | El aviso llega **aunque `loop()` esté en un `delay()`**. |
+| `loop()` lee el pin en cada vuelta. | El periférico GPIO vigila el pin en hardware. |
+| Si `loop()` está ocupado (`delay(2000)`), el toque se pierde. | El aviso llega aunque `loop()` esté en un `delay()`. |
 
 ```cpp
 void loop() {
-  if (digitalRead(21) == LOW) {   // ¿ya presionaron? (sondeo)
+  if (digitalRead(21) == LOW) {   // sondeo
     encenderAlarma();
   }
-  // ...otras tareas...
 }
 ```
 
-En un juego de luces perder un toque da igual; en una alarma de puerta, no.
-
-### Qué hace el hardware cuando llega el aviso
-
-```mermaid
-sequenceDiagram
-    participant B as Botón
-    participant G as Periférico GPIO
-    participant C as CPU
-    participant L as loop()
-    participant I as ISR
-    B->>G: se presiona (pin 1 → 0)
-    G->>C: detecta el cambio en hardware
-    C->>L: congela loop() en la instrucción actual
-    C->>I: ejecuta la ISR completa
-    I-->>L: regresa a la instrucción siguiente, como si nada
-```
-
-**Mientras corre la ISR, `loop()` está congelado.**
-
-### Semana 3 vs. semana 4: el mismo mecanismo
-
-| | Semana 3: temporizador | Semana 4: externa |
-| --- | --- | --- |
-| ¿Quién toca el timbre? | El temporizador, dentro del chip | Algo de afuera, por un pin |
-| ¿Cuándo? | Cada cierto tiempo, fijo | Cuando ocurre el evento |
-| Se configura con | `timerBegin`, `timerAlarm`… | `attachInterrupt()` |
-| Pausa, ISR, regreso | Igual | Igual |
-| ISR, IRAM_ATTR, volatile, bandera | Igual | Igual |
-
-## Bloque 2 · Flancos
-
-- **Nivel:** "la puerta está abierta" — un estado que dura.
-- **Flanco:** "la puerta se acaba de abrir" — un instante.
-
-Con **`INPUT_PULLUP` la lógica es invertida**: suelto = 1, presionado = 0.
-
-| Modo | Cambio | Con pull-up ocurre… |
-| --- | --- | --- |
-| **FALLING** | 1 → 0 | Al **presionar** |
-| **RISING** | 0 → 1 | Al **soltar** |
-| **CHANGE** | Ambos | Presionar y soltar: la ISR corre **dos veces por toque** |
+### Qué pasa cuando llega el aviso
 
 ```mermaid
 flowchart TD
-    Q{"¿Cuándo debe actuar?"}
-    Q -->|"Al presionar"| P{"¿Botón con pull-up?"}
-    P -->|"Sí: presionar baja la señal"| F["FALLING"]
-    P -->|"No: pull-down, presionar sube"| R1["RISING"]
-    Q -->|"Al soltar, con pull-up"| R2["RISING"]
-    Q -->|"En ambos"| C["CHANGE"]
+    A["Se presiona el botón<br/>el pin pasa de 1 a 0"] --> B["El periférico GPIO<br/>detecta el cambio"]
+    B --> C["La CPU congela loop"]
+    C --> D["Se ejecuta la ISR completa"]
+    D --> E["loop continúa<br/>en la instrucción siguiente"]
 ```
 
-**Pregunta típica:** botón en `INPUT_PULLUP`, la alarma debe sonar al presionar → **FALLING**, porque presionar une el pin con GND y la señal **cae** de 1 a 0.
+Mientras corre la ISR, `loop()` está congelado.
 
-## Bloque 3 · Pines que admiten interrupción
+### Semana 3 y semana 4
 
-| Pines | ¿Sirven? | Cuidado |
+| | Semana 3: temporizador | Semana 4: externa |
 | --- | --- | --- |
-| 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33 | **Sí** | Los recomendados (AP4: botón en GPIO21) |
-| 34, 35, 36, 39 (solo entrada) | Sí, con cuidado | **No tienen pull-up interna** |
-| 0, 2, 5, 12, 15 (strapping) | Evitar | Si están presionados al encender, arranca mal |
-| 6 a 11 (flash) | **No** | Los usa la memoria del programa |
+| Origen del aviso | El timer, dentro del chip | Un pin, desde afuera |
+| Se configura con | `timerBegin`, `timerAlarm`… | `attachInterrupt()` |
+| Pausa, ISR, regreso | Igual | Igual |
+| `IRAM_ATTR`, `volatile`, bandera | Igual | Igual |
 
-En el Arduino Uno solo **D2 y D3** podían; en el ESP32, casi todos.
+## 2. Flancos
 
-**Pines 34–39: pull-up externa.** Sin ella el pin queda **flotando**: capta ruido y aparecen alarmas sin que nadie toque. Con una **10 kΩ a 3,3 V**: suelto = 1 seguro.
+- **Nivel:** estado que dura (el pin está en 0).
+- **Flanco:** instante del cambio (el pin acaba de pasar a 0).
 
-## Bloque 4 · `attachInterrupt()`: instalar el timbre
+Con `INPUT_PULLUP` la lógica es invertida: suelto = 1, presionado = 0.
+
+```mermaid
+flowchart LR
+    A["1<br/>suelto"] -->|FALLING<br/>al presionar| B["0<br/>presionado"]
+    B -->|RISING<br/>al soltar| A
+```
+
+| Modo | Cambio | Con pull-up ocurre |
+| --- | --- | --- |
+| **FALLING** | 1 → 0 | Al presionar |
+| **RISING** | 0 → 1 | Al soltar |
+| **CHANGE** | Ambos | Al presionar y al soltar: la ISR corre dos veces por toque |
+
+**Caso típico:** botón con `INPUT_PULLUP` y alarma al presionar → **FALLING**.
+
+## 3. Pines que admiten interrupción
+
+| Pines | Uso |
+| --- | --- |
+| 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33 | Recomendados (AP4: botón en GPIO21). |
+| 34, 35, 36, 39 | Sirven, pero no tienen pull-up interna. |
+| 0, 2, 5, 12, 15 (strapping) | Evitar: si están presionados al encender, el arranque falla. |
+| 6 a 11 | No usar: los ocupa la flash. |
+
+En el Arduino Uno solo D2 y D3 admiten interrupción.
+
+**Pines 34–39:** se necesita una pull-up externa (10 kΩ a 3,3 V). Sin ella el pin queda flotando, capta ruido y genera alarmas falsas.
+
+## 4. `attachInterrupt()`
 
 ```cpp
 attachInterrupt(digitalPinToInterrupt(21), isrBoton, FALLING);
 ```
 
-| Parámetro | Pregunta | Valor |
-| --- | --- | --- |
-| `digitalPinToInterrupt(21)` | ¿Qué pin vigilar? | El GPIO21 |
-| `isrBoton` | ¿A quién llamar? | El **nombre** de la ISR, **sin paréntesis** (no la llamas) |
-| `FALLING` | ¿Qué cambio? | FALLING, RISING o CHANGE |
-
-En español: "cuando el pin 21 caiga de 1 a 0, llama a `isrBoton`".
-
-- Va **una sola vez, en `setup()`**.
-- **Orden:** primero `pinMode(21, INPUT_PULLUP)`, después `attachInterrupt(...)`.
-- `detachInterrupt(pin)` desinstala el timbre.
-
-## Bloque 5 · La ISR a fondo
-
-| Función normal | ISR |
+| Parámetro | Qué indica |
 | --- | --- |
-| Tú la llamas, en el punto que decides. | **Tú nunca la llamas.** La llama el hardware, en cualquier momento. |
+| `digitalPinToInterrupt(21)` | El pin que se vigila |
+| `isrBoton` | El nombre de la ISR, **sin paréntesis** |
+| `FALLING` | El tipo de cambio: FALLING, RISING o CHANGE |
 
-Analogía del taller: dejas tu número (`attachInterrupt`), sigues con tu vida (`loop()`), el taller te llama (el hardware ejecuta `isrBoton`). Llamar cada hora "¿ya está?" sería sondeo. En la semana 3 la llamamos **callback**.
+```mermaid
+flowchart TD
+    A["setup"] --> B["pinMode con INPUT_PULLUP"]
+    B --> C["attachInterrupt"]
+```
 
-### Regla 1: la ISR debe ser corta
+- Se llama una sola vez, en `setup()`.
+- Primero `pinMode(21, INPUT_PULLUP)`, después `attachInterrupt(...)`.
+- `detachInterrupt(pin)` la desactiva.
 
-| ✔ Sí va en la ISR | ✘ No va en la ISR |
+## 5. La ISR
+
+Una función normal la llama el programa. **Una ISR no se llama nunca desde el código:** la ejecuta el hardware cuando ocurre el evento.
+
+### Debe ser corta
+
+| Va en la ISR | No va en la ISR |
 | --- | --- |
 | Subir una bandera | `Serial.print` / `println` |
-| Guardar el tiempo: `millis()` | `delay()` |
+| Guardar `millis()` | `delay()` |
 | Sumar 1 a un contador | Cálculos largos |
-| `digitalWrite` (es rápido) | Esperar a que algo pase |
+| `digitalWrite` | Esperar a que algo pase |
 
-Como el extintor: apagas el fuego y sales; nada de limpiar la cocina.
-
-### Si la ISR tarda demasiado: el watchdog
+Si la ISR tarda demasiado, el watchdog reinicia el ESP32. Síntoma: "el ESP32 se reinicia de vez en cuando" y aparece *Guru Meditation Error* en el Monitor Serie.
 
 ```mermaid
 flowchart LR
-    A["ISR larga<br/>Serial, delay…"] --> B["Watchdog<br/>detecta algo trabado"]
-    B --> C["Reinicio<br/>el ESP32 arranca de nuevo"]
-    C --> D["Monitor Serie<br/>Guru Meditation Error"]
+    A["ISR larga<br/>Serial, delay…"] --> B["Watchdog detecta<br/>programa trabado"]
+    B --> C["Reinicio del ESP32"]
 ```
 
-Síntoma típico: **"el ESP32 se reinicia de vez en cuando"**.
+## 6. `IRAM_ATTR`
 
-## Bloque 6 · IRAM: dónde vive la ISR
+El programa está en la **flash** (lenta). La **IRAM** es memoria interna rápida para instrucciones. A veces la flash queda inaccesible por un momento (por ejemplo, al escribir en ella). Si una interrupción llega entonces y la ISR está en la flash, la CPU no puede leerla y el chip se cae.
 
 ```mermaid
 flowchart LR
-    CPU["CPU 240 MHz"] <--> CACHE["Caché<br/>copia de lo leído hace poco"]
-    CACHE <-->|"bus SPI, lento"| FLASH["Flash 4 MB<br/>tu programa, no se borra"]
-    CPU <--> SRAM
-    subgraph SRAM["SRAM interna 520 KB · rápida, se borra al apagar"]
-        IRAM["IRAM: instrucciones<br/>aquí va la ISR"]
-        DRAM["DRAM: datos<br/>aquí vive alerta"]
-    end
+    A["ISR en flash"] --> B["Flash ocupada<br/>llega una interrupción"]
+    B --> C["La CPU no puede<br/>leer la ISR"]
+    C --> D["El chip se cae"]
+    E["ISR en IRAM"] --> F["Siempre se puede leer"]
 ```
-
-Ojo: en el ESP32, **DRAM = *Data RAM***, no la DRAM de los computadores.
-
-### El problema: a veces la caché se apaga
-
-```mermaid
-flowchart LR
-    A["El ESP32 escribe<br/>en la flash"] --> B["La caché se apaga<br/>un momento"]
-    B --> C["Llega una interrupción<br/>y la ISR está en la flash"]
-    C --> D["La CPU no puede leerla<br/>el chip se cae"]
-```
-
-Es raro pero real, y casi no se puede reproducir: "a veces falla y no sé por qué".
 
 ```cpp
 void IRAM_ATTR isrBoton() {   // IRAM_ATTR va entre el tipo y el nombre
-  // código corto de emergencia
+  // código corto
 }
 ```
 
-**Regla: toda ISR lleva `IRAM_ATTR`. Siempre.** Si la omites, funciona casi siempre y falla muy de vez en cuando. (Extintor en la pared de la cocina, no en la bodega cerrada.)
+**Regla: toda ISR lleva `IRAM_ATTR`.** Sin ella funciona casi siempre y falla de vez en cuando.
 
-## Bloque 7 · `volatile`
+## 7. `volatile`
 
-Dos lugares donde puede estar un dato:
-
-- **RAM → el pizarrón:** donde vive la variable `alerta`; la ISR y `loop()` la ven.
-- **Registro de la CPU → tu cuaderno:** la CPU copia el dato aquí para trabajar. (No son los registros de periféricos `GPIO_OUT`, `GPIO_IN`.)
-
-El compilador es "ahorrativo":
+El compilador, para ahorrar pasos, puede guardar una copia de una variable en un registro de la CPU y no volver a leerla de la RAM. Como no ve que la ISR la cambia, `loop()` puede quedarse con el valor viejo.
 
 ```cpp
 while (alerta == false) {
-  // nada aquí adentro cambia alerta
+  // nada aquí cambia alerta
 }
 ```
 
-Piensa: "nadie cambia `alerta` aquí; la copio una vez a mi cuaderno y no vuelvo al pizarrón". **No sabe que existe la ISR** (nadie la llama desde el código).
-
-| Momento | RAM (pizarrón) | Copia en la CPU (cuaderno) | ¿Qué ve el loop? |
+| Momento | `alerta` en RAM | Copia en la CPU | Lo que ve loop |
 | --- | --- | --- | --- |
-| Arranca el loop | `alerta = false` | false | false |
-| La ISR escribe | `alerta = true` | false | false |
-| Siguen las vueltas | true | false | **false para siempre** |
+| Arranca loop | false | false | false |
+| La ISR escribe | true | false | false |
+| Siguen las vueltas | true | false | false para siempre |
 
-El LED nunca enciende y **no hay error de compilación**.
+El LED nunca enciende y no hay error de compilación.
 
 ```cpp
 volatile bool alerta = false;
 ```
 
-"Puede cambiar a tus espaldas: ve a la RAM cada vez que la uses." **Solo hace eso**: no la hace más rápida ni más segura (ni atómica).
+`volatile` obliga a leer la variable de la RAM cada vez. Solo eso: no la hace más rápida ni atómica.
 
-### La prueba: ¿la tocan la ISR **y** el loop?
-
-| Variable | ¿ISR? | ¿loop? | ¿`volatile`? |
-| --- | --- | --- | --- |
-| `alerta` | escribe | lee | **Sí** |
-| `pulsos` | escribe | lee | **Sí** |
-| `tUltimo` | lee y escribe | — | No |
-| `total` | — | lee y escribe | No |
-
-No importa dónde se escribe, sino **cuántas partes del programa la tocan**.
+### Cuándo usarla
 
 ```mermaid
 flowchart TD
-    A{"¿La usa la ISR?"} -->|No| N["No necesita volatile"]
-    A -->|Sí| B{"¿La usa también loop()?"}
+    A{"La usa la ISR"} -->|No| N["No necesita volatile"]
+    A -->|Sí| B{"La usa también loop"}
     B -->|No| N
-    B -->|Sí| V["volatile"]
+    B -->|Sí| V["Usar volatile"]
 ```
 
-**Error traicionero:** con un `Serial.println` en el loop, el compilador suele volver a leer la RAM y "parece que `volatile` no hacía falta". Quitas el println o cambias la optimización y deja de funcionar. Si cumple la regla, **va `volatile`**.
+| Variable | ISR | loop | `volatile` |
+| --- | --- | --- | --- |
+| `alerta` | escribe | lee | Sí |
+| `pulsos` | escribe | lee | Sí |
+| `tUltimo` | lee y escribe | no la usa | No |
+| `total` | no la usa | lee y escribe | No |
 
-## Bloque 8 · Patrón bandera
+## 8. Patrón bandera
 
-| Cartero = ISR | Banderita = variable | Tú = `loop()` |
-| --- | --- | --- |
-| Deja la carta y levanta la banderita; tarda 5 s y se va. | `volatile bool alerta`. Arriba = "pasó algo". | Ves la banderita, la bajas y lees con calma. |
+```mermaid
+flowchart TD
+    subgraph ISR["ISR: rápida"]
+        A["1. alerta = true"] --> B["2. Sale"]
+    end
+    subgraph LOOP["loop: sin prisa"]
+        C{"alerta en true"} -->|Sí| D["1. alerta = false"]
+        D --> E["2. Trabajo pesado<br/>imprimir, sirena, LCD"]
+        C -->|No| F["Otras tareas"]
+    end
+    B -.-> C
+```
 
-| ISR (rápida) | `loop()` (con calma) |
-| --- | --- |
-| 1. Sube la bandera: `alerta = true` | 1. ¿Bandera arriba? |
-| 2. Sale. Nada más. | 2. La baja: `alerta = false` |
-| | 3. Trabajo pesado: imprimir, sirena, WiFi, LCD… |
-
-**En el loop: primero bajar la bandera, después trabajar.** El aviso puede atenderse un poco tarde, **pero no se pierde**.
+En `loop()`: **primero bajar la bandera, después trabajar.** El aviso puede atenderse un poco tarde, pero no se pierde.
 
 ```cpp
-volatile bool alerta = false;          // 1. la bandera
+volatile bool alerta = false;          // la bandera
 
-void IRAM_ATTR isrBoton() {            // 2. la ISR
-  alerta = true;                       //    sube la bandera
+void IRAM_ATTR isrBoton() {            // la ISR
+  alerta = true;                       // sube la bandera
 }
 
-void loop() {                          // 3. el loop
-  if (alerta) {                        //    ¿arriba?
-    alerta = false;                    //    la baja
-    Serial.println("¡Alerta!");        //    trabajo pesado
+void loop() {
+  if (alerta) {                        // está arriba
+    alerta = false;                    // la baja
+    Serial.println("Alerta");          // trabajo pesado
   }
 }
 ```
 
-### Limitación: la bandera no cuenta
+### La bandera no cuenta
 
 | Bandera (`bool`) | Contador (`uint32_t`) |
 | --- | --- |
-| Dice "pasó algo". | Dice "cuántas veces". |
-| 3 toques mientras el loop está ocupado = **1 aviso**. | La ISR suma 1; el loop lo lee. |
+| Dice que pasó algo. | Dice cuántas veces. |
+| 3 toques con el loop ocupado = 1 aviso. | La ISR suma 1 y el loop lo lee. |
 
 ```cpp
 volatile uint32_t pulsos = 0;
 void IRAM_ATTR isrBoton() { pulsos++; }
 ```
 
-## Bloque 9 · Rebote dentro de la ISR
+## 9. Rebote dentro de la ISR
 
-Un toque produce **varios flancos de bajada** en milisegundos → la ISR corre 3 o 5 veces.
+Un toque produce varios flancos de bajada en pocos ms, y cada uno ejecuta la ISR: un toque cuenta como 3 o 5.
 
-| Con sondeo (AP2) | Con interrupción |
-| --- | --- |
-| El `loop()` filtraba el rebote. | Cada rebote dispara la ISR: un toque cuenta como 3 o 5. |
-
-Solución: ignorar flancos a menos de **50 ms** del último aceptado (el patrón `ahora − tAnterior` de la semana 2).
+**Solución:** ignorar los flancos que lleguen a menos de 50 ms del último aceptado (el patrón `ahora − tAnterior` de la semana 2).
 
 ```cpp
-uint32_t tUltimo = 0;                  // solo la ISR → no volatile
+uint32_t tUltimo = 0;                  // solo la ISR la usa: sin volatile
 
 void IRAM_ATTR isrBoton() {
   uint32_t ahora = millis();
-  if (ahora - tUltimo >= 50) {         // ¿toque nuevo?
+  if (ahora - tUltimo >= 50) {         // toque nuevo
     alerta = true;
     tUltimo = ahora;
   }                                    // si no: es rebote
 }
 ```
 
-## Bloque 10 · Todo junto
+## 10. Programa completo (AP4)
 
 ```mermaid
-flowchart LR
-    A["Botón<br/>FALLING"] --> B["Periférico GPIO<br/>detecta en hardware"]
-    B --> C["ISR<br/>IRAM_ATTR + antirrebote"]
-    C --> D["Bandera<br/>volatile"]
-    D --> E["loop()<br/>trabajo pesado"]
+flowchart TD
+    S["setup<br/>pinMode y attachInterrupt"] --> L["loop"]
+    L --> Q{"alerta en true"}
+    Q -->|Sí| W["Bajar alerta<br/>cambiar LED y Serial.println"]
+    Q -->|No| L
+    W --> L
 ```
-
-- Si olvidas **`volatile`** → falla el paso **bandera → loop()**: el loop nunca ve el cambio.
-- Si olvidas **`IRAM_ATTR`** → falla el paso **ISR**: si la caché está apagada, la CPU no la encuentra y el chip se cae (de vez en cuando).
-
-### Programa completo (AP4)
 
 ```cpp
 const uint8_t PIN_BOTON = 21;
@@ -348,40 +300,21 @@ void loop() {
   if (alerta) {
     alerta = false;
     digitalWrite(PIN_LED, !digitalRead(PIN_LED));
-    Serial.println("¡Alerta! Puerta abierta");
+    Serial.println("Alerta: puerta abierta");
   }
-  delay(2000);                          // loop ocupado: el aviso NO se pierde
+  delay(2000);                          // loop ocupado: el aviso no se pierde
 }
 ```
 
-## Control de aprendizaje (resuelto)
+Si falta una pieza:
 
-<details>
-<summary>1 · Pulsador con INPUT_PULLUP; la alarma debe activarse al presionar. ¿RISING, FALLING o CHANGE?</summary>
+- Sin `volatile`: `loop()` nunca ve el cambio de la bandera.
+- Sin `IRAM_ATTR`: de vez en cuando la CPU no encuentra la ISR y el chip se cae.
 
-**FALLING.** Con pull-up el pin está en 1 suelto; al presionar se une a GND y la señal **cae** de 1 a 0. RISING ocurriría al soltar y CHANGE dispararía dos veces por toque.
-</details>
+## Ideas para recordar
 
-<details>
-<summary>2 · ¿Cuáles necesitan volatile? <code>pulsos</code> (ISR suma, loop lee), <code>tUltimo</code> (solo ISR), <code>total</code> (solo loop)</summary>
-
-Solo **`pulsos`**, porque la tocan la ISR **y** el loop. `tUltimo` y `total` las usa una sola parte del programa.
-</details>
-
-<details>
-<summary>3 · <code>Serial.println("toque")</code> dentro de la ISR; el ESP32 se reinicia con "Guru Meditation Error". ¿Qué pasa?</summary>
-
-La ISR es **demasiado larga** (Serial es lento) y el **watchdog** reinicia el chip. Corrección: **patrón bandera** — la ISR solo hace `alerta = true` y el `Serial.println` va en `loop()`.
-</details>
-
-<details>
-<summary>4 · Sin antirrebote (T_REBOTE = 0) se presiona 10 veces. ¿Exactamente 10, menos o más?</summary>
-
-**Más de 10.** Cada toque mecánico rebota y produce varios flancos de bajada; cada uno dispara la ISR.
-</details>
-
-<details>
-<summary>5 · Timer a 1 MHz, alarma 500 000 con autorrecarga. ¿Cada cuánto corre la ISR? ¿Cuántas veces por segundo?</summary>
-
-tiempo = 500 000 / 1 000 000 = **0,5 s** → **2 veces por segundo**.
-</details>
+1. Botón con `INPUT_PULLUP` que actúa al presionar → **FALLING**. RISING ocurre al soltar; CHANGE dispara dos veces por toque.
+2. `volatile` solo para variables que tocan la ISR **y** el loop (`pulsos` sí; `tUltimo` y `total` no).
+3. Nada lento dentro de la ISR: el watchdog reinicia el chip. Usar el patrón bandera.
+4. Sin antirrebote se cuentan más toques de los reales.
+5. Timer a 1 MHz con alarma 500 000 y autorrecarga: la ISR corre cada 0,5 s (2 veces por segundo).

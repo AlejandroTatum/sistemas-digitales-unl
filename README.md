@@ -45,7 +45,7 @@ Resúmenes propios de las clases (no forman parte de ninguna entrega), en dos fo
 | 2 | Tipos de datos, tiempo y pulsadores | [MD](unidad-1/apuntes/04-tipos-tiempo-y-pulsadores.md) | [PDF](unidad-1/apuntes/pdf/04-tipos-tiempo-y-pulsadores.pdf) |
 | 3 | Temporizadores de hardware | [MD](unidad-1/apuntes/05-temporizadores.md) | [PDF](unidad-1/apuntes/pdf/05-temporizadores.pdf) |
 | 4 | Interrupciones externas | [MD](unidad-1/apuntes/06-interrupciones-externas.md) | [PDF](unidad-1/apuntes/pdf/06-interrupciones-externas.pdf) |
-| — | Repaso de la unidad | [MD](unidad-1/apuntes/repaso-prueba.md) | [PDF](unidad-1/apuntes/pdf/07-repaso-para-la-prueba.pdf) |
+| — | Resumen de la unidad | [MD](unidad-1/apuntes/repaso-prueba.md) | [PDF](unidad-1/apuntes/pdf/07-repaso-para-la-prueba.pdf) |
 
 ---
 

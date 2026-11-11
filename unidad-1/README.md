@@ -23,7 +23,7 @@ Resultado de aprendizaje **R1**: diseña arquitectura de microcontroladores.
 
 ## Apuntes de estudio
 
-Resúmenes de las clases de las semanas 1 a 4 y repaso para la prueba. Índice completo en [apuntes/](apuntes).
+Resúmenes de las clases de las semanas 1 a 4 y resumen de la unidad. Índice completo en [apuntes/](apuntes).
 
 | Semana | Tema | Resumen | Guía PDF |
 | --- | --- | --- | --- |
@@ -33,4 +33,4 @@ Resúmenes de las clases de las semanas 1 a 4 y repaso para la prueba. Índice c
 | 2 | Tipos de datos, tiempo y pulsadores | [Markdown](apuntes/04-tipos-tiempo-y-pulsadores.md) | [PDF](apuntes/pdf/04-tipos-tiempo-y-pulsadores.pdf) |
 | 3 | Temporizadores | [Markdown](apuntes/05-temporizadores.md) | [PDF](apuntes/pdf/05-temporizadores.pdf) |
 | 4 | Interrupciones externas | [Markdown](apuntes/06-interrupciones-externas.md) | [PDF](apuntes/pdf/06-interrupciones-externas.pdf) |
-| — | Repaso para la prueba | [Markdown](apuntes/repaso-prueba.md) | [PDF](apuntes/pdf/07-repaso-para-la-prueba.pdf) |
+| — | Resumen de la unidad | [Markdown](apuntes/repaso-prueba.md) | [PDF](apuntes/pdf/07-repaso-para-la-prueba.pdf) |

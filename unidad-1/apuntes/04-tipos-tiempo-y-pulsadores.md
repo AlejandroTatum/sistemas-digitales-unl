@@ -1,34 +1,40 @@
-# S2 · Sesión 2 — Programar para el hardware: tipos de datos, tiempo sin bloquear y pulsadores
+# S2 · Sesión 2 — Tipos de datos, tiempo sin bloquear y pulsadores
 
-> Semana 2 · Resultado de aprendizaje R1. Todo esto se usa en la AP2 (juego de luces).
-> Fuente: `S2_Sesion2_Tipos_Tiempo_Pulsadores.pdf`.
+> Semana 2 · Resultado de aprendizaje R1. Se usa en la AP2 (juego de luces).
 
-## Idea central en una línea
+## Idea central
 
-En embebidos el **tamaño real** de cada tipo importa, el tiempo se mide **sin bloquear** (`millis()` + resta) y un pulsador se lee con **pull-up + antirrebote + flanco**.
+```mermaid
+flowchart TD
+    A["Programar para el hardware"] --> B["Tipos de datos<br/>usar tamaño fijo"]
+    A --> C["Tiempo<br/>millis() y resta"]
+    A --> D["Pulsador<br/>pull-up, antirrebote, flanco"]
+```
 
 ## Parte 1 · Tipos de datos
 
-Una variable es una **caja en la SRAM**. El tipo define:
+Una **variable** es un espacio de la SRAM. Su **tipo** define cuántos bytes ocupa y cómo se leen sus bits.
 
-- el **tamaño** de la caja;
-- **cómo se leen** sus bits.
+El mismo byte `1100 1100` vale **204** como `uint8_t` y **−52** como `int8_t`.
 
-El mismo byte `1100 1100` vale **204** como `uint8_t` y **−52** como `int8_t` (el bit alto es el signo).
+### El tamaño de `int` cambia según el chip
 
-### `int` no mide lo mismo en todas partes (bytes)
+| Tipo | AVR (Uno) | ESP32 |
+| --- | --- | --- |
+| `int` | 2 bytes | 4 bytes |
+| `long` | 4 bytes | 4 bytes |
+| `float` | 4 bytes | 4 bytes |
+| `double` | 4 bytes | 8 bytes |
+| puntero | 2 bytes | 4 bytes |
 
-| Tipo | AVR (Uno) | ESP32 | Ojo |
-| --- | --- | --- | --- |
-| `char` | 1 · con signo | 1 · sin signo | Usar `int8_t` / `uint8_t` |
-| `short` | 2 | 2 | — |
-| `int` | **2** | **4** | ¡Cambia! |
-| `long` | 4 | 4 | — |
-| `float` | 4 | 4 (FPU) | Rápido en el ESP32 |
-| `double` | 4 (= float) | 8 (software) | Lento en el ESP32 |
-| puntero | 2 | 4 | ¡Cambia de tamaño! |
+Por eso se usan los tipos de `stdint.h`, que llevan el tamaño en el nombre.
 
-### `stdint.h`: el tamaño va en el nombre
+```mermaid
+flowchart LR
+    A["uint8_t"] --> B["u = sin signo"]
+    A --> C["8 = bits"]
+    A --> D["_t = tipo"]
+```
 
 | Tipo | Rango |
 | --- | --- |
@@ -36,91 +42,87 @@ El mismo byte `1100 1100` vale **204** como `uint8_t` y **−52** como `int8_t` 
 | `int16_t` / `uint16_t` | −32 768 … 32 767 / 0 … 65 535 |
 | `int32_t` / `uint32_t` | ≈ ±2,1 × 10⁹ / 0 … ≈ 4,29 × 10⁹ |
 
-Lectura del nombre: **u** = sin signo · **número** = bits · **_t** = tipo.
-Usarlos para registros y máscaras, protocolos y tramas, arreglos grandes y **tiempos (`uint32_t`)**.
+Se usan para registros, máscaras y **tiempos (`uint32_t`)**.
 
-### Desbordamiento: el odómetro que da la vuelta
+### Desbordamiento
 
-```cpp
-uint8_t c = 253;   // c++ cinco veces → 253 254 255 0 1
+**Desbordamiento:** el valor se pasa del máximo del tipo.
+
+```mermaid
+flowchart LR
+    A["uint8_t c = 253"] --> B["254"] --> C["255"] --> D["0"] --> E["1"]
 ```
 
-| | Sin signo | Con signo |
-| --- | --- | --- |
-| Al pasarse del máximo | **Da la vuelta** a 0 | — |
-| ¿Está definido? | Sí, comportamiento definido | **No**: comportamiento indefinido, no confiar |
+- **Sin signo** (`uint`): vuelve a 0. Es un comportamiento definido.
+- **Con signo** (`int`): comportamiento indefinido. No confiar en él.
 
-`int t = millis();` falla: en el **Uno** (int de 16 bits) a los **~32 s**; en el **ESP32** (int de 32 bits) a los **~24,8 días**. → **Usar `uint32_t`**.
+`millis()` devuelve `uint32_t`. Si se guarda en un `int` se desborda: en el Uno a los ~32 s y en el ESP32 a los ~24,8 días. Por eso: **`uint32_t t = millis();`**
 
-### Promoción a `int`
+### Máscaras y literales
 
-Antes de operar, los tipos pequeños (`uint8_t`, `char`) se **convierten a `int`**.
+El número `1` es un `int` con signo. Para desplazarlo hasta el bit 31 se usa el literal `1UL`.
 
-```cpp
-uint8_t a = 0xCC;                      // 1100 1100
-Serial.println(~a, BIN);               // ESP32: 11111111111111111111111100110011
-Serial.println((uint8_t)~a, BIN);      // 110011  (= 0011 0011, sin ceros a la izquierda)
-```
-
-`~a` se calcula como `int` (32 bits en el ESP32, 16 en el Uno), así que los bits altos salen en 1. El **cast `(uint8_t)`** lo devuelve a 8 bits.
-
-### Máscaras: el 1 también tiene tipo
-
-| ✘ Riesgoso | ✔ Correcto |
+| Incorrecto | Correcto |
 | --- | --- |
-| `uint32_t m = 1 << 31;` → el `1` es `int` con signo y desborda | `uint32_t m = 1UL << 31;` → literal de 32 bits sin signo |
-| `~a` sin cast → da 32 bits | `(uint8_t)~a` → vuelve a 8 bits |
+| `uint32_t m = 1 << 31;` | `uint32_t m = 1UL << 31;` |
+| `~a` (se calcula como `int`, sale de 32 bits) | `(uint8_t)~a` (vuelve a 8 bits) |
 
-Literales: `0x` hex · `0b` binario · `U` sin signo · `UL` unsigned long.
+Literales: `0x` hexadecimal · `0b` binario · `U` sin signo · `UL` unsigned long.
 
-### Constantes con tipo
+### Constantes
 
-| Forma | Qué es | ¿Tipo? | Uso |
-| --- | --- | --- | --- |
-| `#define LED 16` | Reemplazo de texto | No | Solo por compatibilidad |
-| `const uint8_t LED = 16;` | Constante verificada | Sí | — |
-| `constexpr uint8_t LED = 16;` | Calculada al compilar | Sí | **La usaremos** |
-| `enum Modo { LENTO, RAPIDO };` | Estados con nombre | Sí | Modos del juego |
-
-En el ESP32 una `const` global se queda en la flash; en el AVR se copia a la SRAM (salvo `PROGMEM` o `F()`).
+| Forma | Qué es |
+| --- | --- |
+| `constexpr uint8_t LED = 16;` | Constante con tipo, calculada al compilar. **La usaremos.** |
+| `enum Modo { LENTO, RAPIDO };` | Nombres para estados o modos. |
 
 ### `volatile` y `static`
 
 | `volatile` | `static` |
 | --- | --- |
-| "Este valor puede cambiar sin que lo veas". | Dentro de una función: **conserva su valor** entre llamadas. |
-| Para variables que modifica una **interrupción** o el hardware. | En un archivo: **privada** de ese archivo. |
-| **No** significa atómico. | — |
+| La variable puede cambiar sin que el código lo note (la cambia una interrupción o el hardware). | Dentro de una función: **conserva su valor** entre llamadas. |
+| Fuerza a leerla de la memoria cada vez. | Sin `static`, una variable local vuelve a su valor inicial en cada llamada. |
 
-Las variables locales viven en la **pila de `loopTask` (8 KB)**: un arreglo local grande la desborda y el ESP32 se reinicia.
+```cpp
+void loop() {
+  static int veces = 0;   // se inicializa una sola vez
+  veces++;
+}
+```
 
-### Actividad "encuentra el bug" (resuelta)
+### Errores comunes con tipos
 
-| Código | Bug | Corrección |
+| Código | Problema | Corrección |
 | --- | --- | --- |
-| `for (uint8_t i = 0; i < 256; i++)` | `uint8_t` nunca llega a 256 (255 → 0): **bucle infinito** | `uint16_t i` |
-| `int t0 = millis();` | `millis()` devuelve `uint32_t`: el `int` desborda | `uint32_t t0` |
-| `uint32_t m = 1 << 31;` | El `1` es `int` con signo: desborda | `1UL << 31` |
-| `void loop() { int veces = 0; veces++; }` | Local: vuelve a 0 en cada vuelta | `static int veces = 0;` |
+| `for (uint8_t i = 0; i < 256; i++)` | `i` nunca llega a 256: bucle infinito | `uint16_t i` |
+| `int t0 = millis();` | Se desborda | `uint32_t t0` |
+| `uint32_t m = 1 << 31;` | El `1` es `int` | `1UL << 31` |
 
 ## Parte 2 · El tiempo sin bloquear
 
-### `delay()`: el cocinero que mira el horno
+### `delay()` bloquea
+
+`delay()` **bloquea**: mientras espera, el programa no hace nada más. Si se presiona un botón en ese tiempo, la pulsación se pierde.
 
 ```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant L as loop() con delay(500)
-    L->>L: lee botón
-    L->>L: delay(500) · bloqueado
-    U->>L: presiona y suelta
-    Note over L: nadie lo leyó → pulsación perdida
-    L->>L: lee botón (ya suelto)
+flowchart TD
+    A["loop: leer botón"] --> B["delay 500 ms<br/>no hace nada más"]
+    B --> C["Botón presionado y soltado<br/>nadie lo lee"]
+    C --> D["loop: leer botón<br/>pulsación perdida"]
 ```
 
-`delay()` **bloquea**: mientras espera, el programa no hace nada más. En el juego de luces el botón "no responde".
+### `millis()`: tiempo sin bloquear
 
-### `millis()`: mirar el reloj de pared
+`millis()` devuelve los milisegundos desde el arranque. El programa lo consulta y calcula cuánto tiempo pasó con una **resta**. Mientras tanto, `loop()` sigue ejecutando otras tareas.
+
+```mermaid
+flowchart TD
+    A["ahora = millis()"] --> B{"ahora − tAnterior ≥ PERIODO"}
+    B -->|Sí| C["Actuar<br/>tAnterior += PERIODO"]
+    B -->|No| D["Seguir con lo demás<br/>leer botones, etc."]
+    C --> D
+    D --> A
+```
 
 ```cpp
 uint32_t ahora = millis();
@@ -128,32 +130,13 @@ if (ahora - tAnterior >= PERIODO) {
   tAnterior += PERIODO;
   // hacer algo
 }
-// el loop sigue: hay tiempo para leer botones
 ```
 
-```mermaid
-flowchart TD
-    A["1 · Leer el reloj<br/>ahora = millis()"] --> B{"2 · ¿ahora − tAnterior ≥ PERIODO?"}
-    B -->|Sí| C["3 · Actuar y anotar<br/>tAnterior += PERIODO"]
-    B -->|No| D["4 · Seguir con lo demás<br/>leer botones, etc."]
-    C --> D
-    D --> A
-```
+### Por qué se resta
 
-Un temporizador de hardware cuenta siempre; `millis()` solo lo mira (timers: semana 3).
+Cuando `millis()` llega al máximo vuelve a 0. La **resta** sigue dando el tiempo correcto (con 8 bits: `4 − 250 = 10` módulo 256). Sumar y comparar (`millis() > tAnterior + PERIODO`) falla al dar la vuelta.
 
-### ¿Y cuando `millis()` da la vuelta?
-
-**Restar** funciona aunque el contador dé la vuelta. Ejemplo con reloj de 8 bits:
-
-```text
-tAnterior = 250, el reloj pasa 255 → 0, ahora = 4
-ahora − tAnterior = 4 − 250 = 10   (módulo 256)  ✔ es justo el tiempo que pasó
-```
-
-✘ **Sumar y comparar** — `millis() > tAnterior + PERIODO` — falla: la suma da la vuelta y la condición se cumple antes de tiempo.
-
-> Regla de oro: **`ahora − tAnterior >= PERIODO`**, siempre con `uint32_t`.
+> Regla: **`ahora − tAnterior >= PERIODO`**, siempre con `uint32_t`.
 
 ### Ejemplo: dos LEDs a ritmos distintos
 
@@ -176,32 +159,55 @@ void loop() {
 }
 ```
 
-**El estado vive en variables, no en el pin.**
+Cada LED tiene su propio `tAnterior` y su propio estado, guardados en variables.
 
-## Parte 3 · Leer un pulsador bien
+## Parte 3 · Leer un pulsador
 
 ### Pull-up
 
+Con `INPUT_PULLUP` el pin se conecta por dentro a 3,3 V mediante una resistencia (pull-up).
+
 | Pulsador | Lectura |
 | --- | --- |
-| Suelto | HIGH (1) — la pull-up interna (decenas de kΩ) lleva el pin a 3,3 V |
-| Presionado | LOW (0) — el botón une el pin con GND |
+| Suelto | HIGH (1) |
+| Presionado | LOW (0), el botón une el pin con GND |
 
-GPIO 34–39: **sin pull-up interna**.
+Los GPIO 34–39 no tienen pull-up interna.
 
 ### Rebote
 
-Un botón mecánico produce **varios cambios falsos** en pocos ms al presionarse.
-**Antirrebote:** aceptar el cambio solo si la señal se queda **quieta entre 20 y 50 ms**.
-✘ Solución tentadora pero mala: `delay(200)` después de leer → vuelve a bloquear.
+**Rebote:** al presionar, un botón mecánico produce varios cambios falsos durante unos pocos ms.
 
-### Nivel vs. flanco
+**Antirrebote:** aceptar el cambio solo si la señal se mantiene estable entre 20 y 50 ms. Usar `delay(200)` para esto no sirve, porque bloquea.
 
-- Un toque humano dura ~200 ms → el **nivel LOW** dura miles de vueltas de `loop()`.
-- ✘ `if (digitalRead(BTN) == LOW) contador++;` cuenta por **nivel**: suma miles.
-- ✔ Actuar **solo en el flanco**: cuando el estado pasa de HIGH a LOW (una vez).
+### Nivel y flanco
 
-### Código: antirrebote + flanco
+- **Nivel:** el estado actual de la señal (HIGH o LOW).
+- **Flanco:** el instante en que la señal cambia. El de bajada es de HIGH a LOW.
+
+Un toque dura ~200 ms, y en ese tiempo `loop()` da miles de vueltas. Si se cuenta por **nivel**, una pulsación suma miles de veces. Se debe actuar **solo en el flanco de bajada**.
+
+```mermaid
+flowchart LR
+    A["HIGH<br/>suelto"] -->|flanco de bajada| B["LOW<br/>presionado"]
+    B -->|flanco de subida| A
+```
+
+### Antirrebote + flanco
+
+```mermaid
+flowchart TD
+    A["Leer el pin"] --> B{"Cambió respecto a<br/>la lectura anterior"}
+    B -->|Sí| C["Reiniciar el tiempo<br/>tUltimoCambio = millis()"]
+    B -->|No| D
+    C --> D{"Estable ≥ 30 ms y distinta<br/>del estado estable"}
+    D -->|No| A
+    D -->|Sí| E["Guardar el nuevo<br/>estado estable"]
+    E --> F{"Es LOW"}
+    F -->|Sí| G["Contar la pulsación"]
+    F -->|No| A
+    G --> A
+```
 
 ```cpp
 constexpr uint8_t PIN_BTN = 21;
@@ -213,7 +219,7 @@ void setup() { Serial.begin(115200); pinMode(PIN_BTN, INPUT_PULLUP); }
 
 void loop() {
   bool lectura = digitalRead(PIN_BTN);
-  if (lectura != lecturaAnterior) {          // se movió: reiniciar
+  if (lectura != lecturaAnterior) {          // cambió: reiniciar el tiempo
     tUltimoCambio = millis(); lecturaAnterior = lectura;
   }
   if (millis() - tUltimoCambio >= T_REBOTE && lectura != estadoEstable) {
@@ -225,21 +231,14 @@ void loop() {
 }
 ```
 
-```mermaid
-flowchart TD
-    A["Leer el pin"] --> B{"¿Cambió respecto a<br/>la lectura anterior?"}
-    B -->|Sí| C["Reiniciar cronómetro<br/>tUltimoCambio = millis()"]
-    B -->|No| D
-    C --> D{"¿Quieta ≥ 30 ms y distinta<br/>del estado estable?"}
-    D -->|No| A
-    D -->|Sí| E["Aceptar el nuevo estado estable"]
-    E --> F{"¿Es LOW?<br/>flanco de bajada"}
-    F -->|Sí| G["Contar la pulsación"]
-    F -->|No, se soltó| A
-    G --> A
-```
+### Estructura de un juego de luces
 
-### Todo junto: estructura de un juego de luces
+```mermaid
+flowchart LR
+    E["Entradas<br/>botón con antirrebote y flanco"] --> L["Lógica<br/>estado y millis()"]
+    L --> S["Salidas<br/>LEDs según el estado"]
+    S --> E
+```
 
 ```cpp
 void loop() {
@@ -257,18 +256,11 @@ void loop() {
 }
 ```
 
-```mermaid
-flowchart LR
-    E["Entradas<br/>botón con antirrebote y flanco"] --> L["Lógica<br/>estado + millis()"]
-    L --> S["Salidas<br/>LEDs según el estado"]
-    S --> E
-```
-
 ## Resumen
 
 | Tema | Lo esencial |
 | --- | --- |
 | Tipos | `int` cambia de tamaño: usar `uint8_t`, `uint32_t`… |
-| Literales y máscaras | `1UL << n` · cast tras `~` · desbordamiento sin signo da la vuelta |
-| Tiempo | `millis()` + resta: `ahora − tAnterior >= PERIODO` |
+| Literales y máscaras | `1UL << n` · cast tras `~` |
+| Tiempo | `millis()` y resta: `ahora − tAnterior >= PERIODO` |
 | Pulsador | `INPUT_PULLUP` · antirrebote 30 ms · actuar en el flanco |

@@ -3,18 +3,22 @@
 > Semana 1 · Resultado de aprendizaje R1.
 > Fuente: `S01_Sesion2_Bits_y_ES_mapeada_en_memoria.pdf`.
 
-## Idea central en una línea
+## Idea central
 
-Para la CPU, encender un LED es **escribir un bit en una dirección de memoria**; para el pin, ese bit son **5 V** (AVR) o **3,3 V** (ESP32).
+Para la CPU, encender un LED es **escribir un bit en una dirección de memoria**.
+
+```mermaid
+flowchart TD
+    A["CPU escribe un 1<br/>en un registro"] --> B["El pin sube a 5 V<br/>(3,3 V en ESP32)"]
+    B --> C["El LED enciende"]
+```
 
 ## 1. Un bit es un nivel de voltaje
 
-| Nivel | Se escribe | Arduino Uno | ESP32 |
+| Bit | Nivel | Arduino Uno | ESP32 |
 | --- | --- | --- | --- |
-| Bajo | 0 | ≈ 0 V | ≈ 0 V |
-| Alto | 1 | ≈ 5 V | ≈ 3,3 V |
-
-Es el transistor como interruptor: en **corte** da 0, en **saturación** da 1.
+| 0 | Bajo | ≈ 0 V | ≈ 0 V |
+| 1 | Alto | ≈ 5 V | ≈ 3,3 V |
 
 ## 2. Un byte: 8 bits con peso
 
@@ -22,11 +26,13 @@ Es el transistor como interruptor: en **corte** da 0, en **saturación** da 1.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 128 | 64 | 32 | 16 | 8 | 4 | 2 | 1 |
 
-- Se numeran de **derecha a izquierda**: bit 0 a la derecha, bit 7 a la izquierda.
+- Los bits se numeran de **derecha a izquierda**.
 - El valor es la **suma de los pesos** de los bits en 1.
-  - `0010 0000` = 32 · `0000 0101` = 4 + 1 = 5.
+- `0010 0000` = 32 · `0000 0101` = 4 + 1 = 5.
 
-## 3. Hexadecimal: 4 bits = 1 símbolo
+## 3. Hexadecimal
+
+Un dígito hexadecimal representa **4 bits**.
 
 | Bin | Hex | Bin | Hex | Bin | Hex | Bin | Hex |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -35,37 +41,29 @@ Es el transistor como interruptor: en **corte** da 0, en **saturación** da 1.
 | 0010 | 2 | 0110 | 6 | 1010 | A | 1110 | E |
 | 0011 | 3 | 0111 | 7 | 1011 | B | 1111 | F |
 
-- Prefijo `0x` = hexadecimal; prefijo `0b` = binario en C.
+- `0x` = prefijo hexadecimal. `0b` = prefijo binario en C.
 - `0010 0000` = `0x20` = `0b00100000`.
 
 ```mermaid
-flowchart LR
-    B["Binario<br/>1100 1000"] -->|"agrupar de 4 en 4"| H["Hex<br/>C 8 → 0xC8"]
-    B -->|"sumar pesos 128+64+8"| D["Decimal<br/>200"]
-    D -->|"restar pesos de mayor a menor"| B
+flowchart TD
+    B["Binario<br/>1100 1000"] -->|"grupos de 4 bits"| H["Hex<br/>C 8 = 0xC8"]
+    B -->|"sumar pesos 128 + 64 + 8"| D["Decimal<br/>200"]
 ```
 
-### Conversiones de clase (resueltas)
+## 4. Operaciones bit a bit
 
-| Dato | Binario | Decimal | Hex |
-| --- | --- | --- | --- |
-| `1000 0001` | 1000 0001 | 129 | 0x81 |
-| `0xFF` | 1111 1111 | 255 | 0xFF |
-| `0x08` | 0000 1000 → **bit 3** en 1 | 8 | 0x08 |
-| `200` | 1100 1000 | 200 | 0xC8 |
-| `0x20 \| 0x01` | 0010 0001 → bits 5 y 0 | 33 | 0x21 |
+| A | B | AND `&` | OR `\|` | XOR `^` |
+| --- | --- | --- | --- | --- |
+| 0 | 0 | 0 | 0 | 0 |
+| 0 | 1 | 0 | 1 | 1 |
+| 1 | 0 | 0 | 1 | 1 |
+| 1 | 1 | 1 | 1 | 0 |
 
-## 4. Compuertas lógicas y operadores en C
-
-| A | B | AND `&` | OR `\|` | XOR `^` | NOT A `~` |
-| --- | --- | --- | --- | --- | --- |
-| 0 | 0 | 0 | 0 | 0 | 1 |
-| 0 | 1 | 0 | 1 | 1 | 1 |
-| 1 | 0 | 0 | 1 | 1 | 0 |
-| 1 | 1 | 1 | 1 | 0 | 0 |
-
-- **AND**: 1 solo si ambos son 1. **OR**: 1 si alguno es 1. **XOR**: 1 si son distintos. **NOT**: invierte.
-- **Bit a bit** = columna por columna; la CPU hace las 8 columnas en una sola instrucción.
+- **AND**: 1 solo si los dos son 1.
+- **OR**: 1 si alguno es 1.
+- **XOR**: 1 si son distintos.
+- **NOT `~`**: invierte el bit.
+- **Bit a bit**: la operación se hace columna por columna.
 
 ```text
   0xCA = 1100 1010
@@ -76,122 +74,105 @@ flowchart LR
 
 ## 5. La máscara `1 << n`
 
-Una **máscara** es un byte con 1 **solo en los bits que quiero tocar**.
+Una **máscara** es un byte con 1 solo en los bits que se quieren tocar.
 
-`1 << 5` = correr un 1 cinco lugares a la izquierda = `0010 0000` = `0x20`.
-Escribir `1 << 5` es más legible que `0x20`: dice "el bit 5".
+`1 << n` mueve un 1 a la izquierda n lugares.
 
-## 6. Las cuatro recetas (¡de memoria!)
-
-| Quiero | En C | Por qué funciona |
+| Expresión | Binario | Hex |
 | --- | --- | --- |
-| Poner el bit n en **1** | `REG \|= (1 << n);` | OR con 1 da 1; OR con 0 deja igual |
-| Poner el bit n en **0** | `REG &= ~(1 << n);` | `~` invierte la máscara; AND con 0 da 0 |
-| **Invertir** el bit n | `REG ^= (1 << n);` | XOR con 1 invierte; XOR con 0 deja igual |
-| **Preguntar** por el bit n | `if (REG & (1 << n))` | Distinto de 0 solo si el bit está en 1 |
+| `1 << 0` | 0000 0001 | 0x01 |
+| `1 << 3` | 0000 1000 | 0x08 |
+| `1 << 5` | 0010 0000 | 0x20 |
 
-Donde la máscara tiene 0, **el bit no cambia**. `REG |= X` es la forma corta de `REG = REG | X`.
+## 6. Cuatro formas de tocar un bit
 
 ```mermaid
 flowchart TD
-    Q{"¿Qué quiero hacer con el bit n?"}
-    Q -->|"Encender"| S["REG |= (1 #lt;#lt; n)"]
-    Q -->|"Apagar"| C["REG #amp;= ~(1 #lt;#lt; n)"]
+    Q{"Qué hacer con el bit n"}
+    Q -->|"Poner en 1"| S["REG |= (1 #lt;#lt; n)"]
+    Q -->|"Poner en 0"| C["REG #amp;= ~(1 #lt;#lt; n)"]
     Q -->|"Invertir"| T["REG ^= (1 #lt;#lt; n)"]
     Q -->|"Leer"| R["if (REG #amp; (1 #lt;#lt; n))"]
 ```
 
-**Error clásico:** `REG = (1 << 2);` para encender el bit 2. Usa `=` en vez de `|=`: **borra todos los demás bits**. Lo correcto es `REG |= (1 << 2);`.
+- Los bits donde la máscara vale 0 **no cambian**.
+- `REG |= X` es la forma corta de `REG = REG | X`.
+- Para tocar varios bits: `REG |= (1 << 0) | (1 << 1);` (máscara `0x03`).
 
-Encender los bits 0 y 1 sin tocar los demás: `REG |= (1 << 0) | (1 << 1);` (máscara `0x03`).
+**Error clásico:** `REG = (1 << 2);` usa `=` y **borra todos los demás bits**. Lo correcto es `REG |= (1 << 2);`.
 
-## 7. Instrucciones del AVR (RISC)
+## 7. Instrucciones del AVR
 
 | Instrucción | Qué hace |
 | --- | --- |
-| `LDI r16, 0x20` | Carga el número 0x20 en el registro r16 |
+| `LDI r16, 0x20` | Carga 0x20 en el registro r16 |
 | `ADD r16, r17` | Suma r17 a r16 |
 | `AND`, `OR`, `EOR`, `COM` | AND, OR, XOR y NOT bit a bit |
-| `SBI 0x05, 5` | Pone en 1 el bit 5 del registro de E/S 0x05 (PORTB) |
-| `CBI 0x05, 5` | Pone en 0 ese mismo bit |
-| `RJMP` | Salta a otra parte del programa |
-
-### De C a bits
+| `SBI 0x05, 5` | Pone en 1 el bit 5 del registro 0x05 (PORTB) |
+| `CBI 0x05, 5` | Pone en 0 ese bit |
 
 ```mermaid
-flowchart LR
-    C["C<br/>PORTB |= (1 #lt;#lt; 5);"] -->|"avr-gcc"| A["Ensamblador<br/>sbi 0x05, 5"]
-    A --> M["Código máquina en Flash<br/>1001 1010 0010 1101 = 0x9A2D"]
+flowchart TD
+    C["C<br/>PORTB |= (1 #lt;#lt; 5);"] -->|"compilador avr-gcc"| A["Ensamblador<br/>sbi 0x05, 5"]
+    A --> M["Código máquina en Flash<br/>0x9A2D, 2 bytes"]
 ```
 
-Una línea de C → **una sola instrucción de 2 bytes**.
-
-### RISC vs. CISC · 8 vs. 32 bits
-
-| RISC | CISC |
-| --- | --- |
-| Pocas instrucciones, simples; casi todas en 1 ciclo | Muchas instrucciones, algunas muy elaboradas |
-| AVR, ARM, RISC-V, **Xtensa (ESP32)** | x86 (PC) |
-
-8 o 32 bits = cuántos bits procesa la CPU de una vez. El ATmega328P necesita **4 sumas** para sumar dos números de 32 bits; el ESP32, **una**.
+- AVR es **RISC**: pocas instrucciones simples, casi todas de 1 ciclo.
+- ATmega328P (8 bits) necesita 4 sumas para dos números de 32 bits. ESP32 (32 bits) necesita 1.
 
 ## 8. E/S mapeada en memoria
 
 Los periféricos se controlan con **registros que tienen dirección**, igual que la memoria.
 
 ```mermaid
-flowchart LR
-    CPU["CPU<br/>sbi 0x05, 5"] -->|"dirección 0x25<br/>dato 0010 0000<br/>escribir"| REG["Registro PORTB<br/>cada bit = flip-flop"]
+flowchart TD
+    CPU["CPU<br/>sbi 0x05, 5"] -->|"dirección 0x25<br/>dato 0010 0000"| REG["Registro PORTB"]
     REG -->|"bit 5 = 1"| PIN["Pin PB5 = 5 V"]
-    PIN --> R["220 Ω"] --> LED["LED encendido"]
+    PIN --> LED["LED encendido"]
 ```
 
-> `0x05` es la dirección de PORTB en el espacio de E/S (lo que usa `sbi`); `0x25` es la misma dirección vista en el mapa de memoria de datos (0x05 + 0x20).
+- `0x05` es la dirección de PORTB en el espacio de E/S (la usa `sbi`).
+- `0x25` es la misma dirección en el mapa de memoria de datos (0x05 + 0x20).
 
-### Tres registros por puerto (B, C y D en el ATmega328P)
+### Tres registros por puerto
 
-| Registro | Para qué sirve | Bit en 1 significa |
-| --- | --- | --- |
-| **DDRx** | Dirección: entrada o salida | **Salida** |
-| **PORTx** | Salida: el valor que sale. Entrada: activa la pull-up | 5 V en el pin, o pull-up activa |
-| **PINx** | Leer el voltaje real del pin | El pin está en alto |
+El ATmega328P tiene los puertos B, C y D.
 
-El **bit n** de cada registro corresponde al **pin n** del puerto.
+| Registro | Función |
+| --- | --- |
+| **DDRx** | Dirección: bit en 1 = **salida**, en 0 = entrada |
+| **PORTx** | Salida: valor que sale. Entrada: activa la pull-up |
+| **PINx** | Lee el voltaje real del pin |
 
-### Los cuatro estados de un pin
+- El **bit n** de cada registro es el **pin n** del puerto.
+- **Pull-up**: resistencia interna que mantiene el pin en 1 cuando nada lo baja.
+- **Flotante**: entrada sin nada que fije su valor; lee al azar.
 
-| DDRxn | PORTxn | Estado del pin | Ejemplo |
-| --- | --- | --- | --- |
-| 0 | 0 | Entrada **flotante**: lee al azar | Nada conectado |
-| 0 | 1 | Entrada con **pull-up** | Botón a GND |
-| 1 | 0 | Salida en 0 (0 V) | LED apagado |
-| 1 | 1 | Salida en 1 (5 V) | LED encendido |
+### Estados de un pin
 
 ```mermaid
 flowchart TD
     D{"DDRxn"}
     D -->|"0 = entrada"| P0{"PORTxn"}
     D -->|"1 = salida"| P1{"PORTxn"}
-    P0 -->|0| F["Flotante: lee al azar"]
-    P0 -->|1| U["Pull-up: suelto = 1, pulsado = 0"]
-    P1 -->|0| L["0 V"]
-    P1 -->|1| H["5 V"]
+    P0 -->|"0"| F["Entrada flotante<br/>lee al azar"]
+    P0 -->|"1"| U["Entrada con pull-up<br/>suelto = 1, pulsado = 0"]
+    P1 -->|"0"| L["Salida en 0 V"]
+    P1 -->|"1"| H["Salida en 5 V"]
 ```
 
-**Con pull-up la lógica queda invertida:** botón suelto lee 1, pulsado lee 0.
-
-### Predice el pin (resuelto)
-
-| Caso | Configuración | Resultado |
+| DDRxn | PORTxn | Estado |
 | --- | --- | --- |
-| A | DDRB5 = 1, PORTB5 = 1 | Salida en alto: **5 V** |
-| B | DDRB5 = 1, PORTB5 = 0 | Salida en bajo: **0 V** |
-| C | DDRD2 = 0, PORTD2 = 1, botón pulsado a GND | Pull-up, pulsado: **PIND2 = 0** |
-| D | DDRD2 = 0, PORTD2 = 0, nada conectado | Flotante: **valor al azar** |
+| 0 | 0 | Entrada flotante |
+| 0 | 1 | Entrada con pull-up |
+| 1 | 0 | Salida en 0 V |
+| 1 | 1 | Salida en 5 V |
 
-## 9. Arduino vs. registros
+Con pull-up la lógica queda **invertida**: botón suelto lee 1, botón pulsado lee 0.
 
-| Funciones de Arduino | Registros (lo que pasa por dentro) |
+## 9. Funciones de Arduino y registros
+
+| Arduino | Registros |
 | --- | --- |
 | `pinMode(13, OUTPUT);` | `DDRB \|= (1 << 5);` |
 | `digitalWrite(13, HIGH);` | `PORTB \|= (1 << 5);` |
@@ -199,32 +180,15 @@ flowchart TD
 | `pinMode(2, INPUT_PULLUP);` | `DDRD &= ~(1 << 2); PORTD \|= (1 << 2);` |
 | `int b = digitalRead(2);` | `int b = (PIND & (1 << 2)) != 0;` |
 
-Pin 13 del Uno = PB5; pin 2 = PD2. Las funciones son más **legibles y portables**; los registros, más **rápidos** y muestran qué ocurre en el chip.
+- Pin 13 del Uno = PB5. Pin 2 = PD2.
+- Las funciones son más legibles y portables. Los registros son más rápidos.
 
 ## Resumen
 
-1. Un bit es un nivel de voltaje; un byte son 8 bits; un dígito hex son 4 bits.
-2. Las operaciones bit a bit aplican AND, OR, XOR y NOT columna por columna.
-3. Con una máscara `1 << n` se toca un solo bit sin cambiar los demás.
-4. Los periféricos se controlan con registros que tienen dirección, como la memoria.
-5. **DDR** elige entrada o salida, **PORT** pone el valor y **PIN** lee el pin.
-
-## Ticket de salida (resuelto)
-
-<details>
-<summary>¿Cuánto es 0x81 en binario?</summary>
-
-`0x81` = `8` `1` = `1000 0001` (decimal 129).
-</details>
-
-<details>
-<summary>Escribe la línea que apaga el bit 4 de PORTB.</summary>
-
-`PORTB &= ~(1 << 4);`
-</details>
-
-<details>
-<summary>Con DDRD2 = 0 y PORTD2 = 1, ¿qué lee PIND2 con el botón pulsado a GND?</summary>
-
-**0**. Es entrada con pull-up; el botón une el pin con GND, así que pulsado lee bajo.
-</details>
+```mermaid
+flowchart TD
+    A["Bit = nivel de voltaje<br/>byte = 8 bits"] --> B["Bit a bit: AND, OR, XOR, NOT"]
+    B --> C["Máscara 1 #lt;#lt; n toca un solo bit"]
+    C --> D["Periféricos = registros con dirección"]
+    D --> E["DDR = dirección · PORT = valor · PIN = lectura"]
+```

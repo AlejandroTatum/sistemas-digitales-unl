@@ -8,7 +8,7 @@ Material de estudio propio a partir de las diapositivas de clase. No es parte de
 
 | Formato | Para qué sirve | Ubicación |
 | --- | --- | --- |
-| **Resumen en Markdown** | Detalle completo de cada clase, con diagramas de flujo y los ejercicios de clase resueltos. | Esta carpeta |
+| **Resumen en Markdown** | Detalle completo de cada clase, explicado de forma simple, con tablas, diagramas y ejemplos. | Esta carpeta |
 | **Guía PDF** (A4 vertical) | Cada tema en diagramas de pasos, para imprimir o leer en el celular. | [pdf/](pdf) |
 
 ## Temas
@@ -21,10 +21,9 @@ Material de estudio propio a partir de las diapositivas de clase. No es parte de
 | 2 | 2 | Tipos de datos, `millis()` sin bloquear y pulsadores (antirrebote y flanco) | [04](04-tipos-tiempo-y-pulsadores.md) | [PDF](pdf/04-tipos-tiempo-y-pulsadores.pdf) |
 | 3 | — | Temporizadores de hardware: prescaler, resolución, alarma, ISR | [05](05-temporizadores.md) | [PDF](pdf/05-temporizadores.pdf) |
 | 4 | — | Interrupciones externas: `attachInterrupt`, `IRAM_ATTR`, `volatile`, patrón bandera | [06](06-interrupciones-externas.md) | [PDF](pdf/06-interrupciones-externas.pdf) |
-| — | — | **Repaso para la prueba**: chuleta, errores frecuentes y ejercicios | [Repaso](repaso-prueba.md) | [PDF](pdf/07-repaso-para-la-prueba.pdf) |
+| — | — | **Resumen de la unidad**: lo esencial de cada tema, fórmulas y errores comunes | [Resumen](repaso-prueba.md) | [PDF](pdf/07-repaso-para-la-prueba.pdf) |
 
 ## Cómo estudiar
 
-1. Empieza por el **repaso** para ver el mapa de toda la unidad.
+1. Empieza por el **resumen de la unidad** para ver el mapa completo.
 2. Recorre cada tema en su guía PDF; si algo no queda claro, abre el resumen en Markdown.
-3. Responde los ejercicios antes de mirar las respuestas.
