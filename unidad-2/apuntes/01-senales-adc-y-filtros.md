@@ -44,6 +44,10 @@ flowchart LR
 
 Pasar de una a otra tiene **dos pasos**: muestrear en el tiempo (cada `1/fs` segundos) y cuantizar el valor (redondearlo al nivel más cercano del ADC).
 
+![Onda analógica, muestras y valor digital](img/analogica-digital.svg)
+
+*La onda continua se mide solo en las muestras; cada muestra se redondea a un nivel del ADC.*
+
 ## 2. Fourier y la FFT
 
 **Fourier:** cualquier señal es una suma de senoidales. Una señal "ruidosa" es la señal útil (frecuencias bajas, cambia lento) más ruido (frecuencias altas, cambia rápido).
@@ -63,6 +67,10 @@ flowchart LR
 - `N` suele ser potencia de 2 (128, 256, 512…), porque así la FFT es más rápida.
 - Sirve para **ver** dónde está el ruido (por ejemplo un pico en 60 Hz de la red eléctrica) y decidir qué filtrar.
 
+![Espectro de una señal con ruido](img/espectro-fft.svg)
+
+*Espectro que entrega la FFT: la señal útil es un pico en baja frecuencia; el ruido aparece como otros picos y como fondo.*
+
 ## 3. Aliasing y filtro antialiasing
 
 **Teorema de Nyquist:** para no perder información hay que muestrear a **más del doble** de la frecuencia más alta de la señal.
@@ -78,6 +86,10 @@ f_alias = | f − k · fs |   (k entero que deja el resultado entre 0 y fs/2)
 ```
 
 **Ejemplo:** `fs = 1000 Hz` y entra un ruido de 900 Hz → `|900 − 1000| = 100 Hz`. En las muestras parece una señal de 100 Hz que **no existe**, y ya no se puede quitar en código.
+
+![Aliasing: 900 Hz muestreada a 1000 Hz](img/aliasing.svg)
+
+*Las muestras de una onda de 900 Hz, tomadas a 1000 Hz, caen sobre una onda de 100 Hz que no existe.*
 
 Por eso el **filtro antialiasing** va **antes** del ADC, en hardware: un pasa bajos (por ejemplo un RC) que corta todo lo que esté por encima de `fs/2`.
 
@@ -139,6 +151,10 @@ void loop() {
 
 Se grafica en el Serial Plotter la **entrada ruidosa** (valor crudo del ADC) contra la **salida filtrada**. La salida es más suave, pero **sufre retardo**: tarda en seguir los cambios reales.
 
+![Entrada ruidosa vs salida filtrada](img/entrada-vs-filtrada.svg)
+
+*Cuando la señal real sube de golpe, la salida filtrada llega al nuevo valor varias muestras después.*
+
 ### Media móvil
 
 Promedia las últimas `N` muestras.
@@ -195,6 +211,28 @@ void loop() {
 
 Lo ideal es usar los dos: el RC protege la entrada y el filtro digital limpia el resto.
 
+### Qué ganamos y qué perdemos al filtrar
+
+Todo filtro es un compromiso: se cambia **ruido** por **retardo**.
+
+| Ganamos | Perdemos |
+| --- | --- |
+| **Menos ruido:** la lectura deja de saltar. | **Retardo:** la salida reacciona tarde a un cambio real. |
+| **Estabilidad:** el mismo estímulo da el mismo valor. | **Detalle:** los cambios rápidos reales se aplanan. |
+| **Umbrales confiables:** un `if (valor > limite)` no se dispara por un pico de ruido. | **Picos cortos:** un pico verdadero pero breve puede desaparecer. |
+| **Tendencia:** se ve hacia dónde va la señal. | **Recursos:** la media móvil guarda N valores en RAM y suma en cada muestra. |
+
+![Filtro suave vs filtro fuerte](img/filtro-suave-vs-fuerte.svg)
+
+*Misma entrada, dos filtros: el fuerte (α chico) quita más ruido, pero tarda más en seguir cada escalón.*
+
+**Cómo elegir N o α:** filtrar lo justo. El retardo tiene que ser menor que el tiempo en que la señal real cambia de verdad.
+
+| Señal | Filtro |
+| --- | --- |
+| Lenta (temperatura, nivel de un tanque) | Fuerte: N grande o α chico |
+| Rápida (botón, audio, vibración) | Suave o ninguno |
+
 ## 6. Pines GPIO 21 y 22: bus I²C
 
 En las notas quedaron los pines **GPIO 21 = datos** y **GPIO 22 = reloj**. Son los pines por defecto del bus **I²C** en el ESP32 (por ejemplo para una pantalla OLED o un sensor digital).
@@ -215,17 +253,17 @@ void setup() {
 }
 ```
 
-## Resumen para repasar
+## Ideas para recordar
 
-| Pregunta | Respuesta corta |
+| Tema | Idea |
 | --- | --- |
-| ¿Qué hace el ADC? | Convierte voltaje en un número (0 a 4095 con 12 bits). |
-| ¿Cuántos canales tiene cada ADC? | ADC1: 8 (GPIO 32 a 39). ADC2: 10. |
-| ¿Qué ADC usar con Wi-Fi? | ADC1. |
-| ¿Para qué sirve la atenuación? | Para elegir el rango de voltaje que mide el ADC. |
-| ¿Qué dice Nyquist? | `fs > 2 · fmax`. |
-| ¿Qué es aliasing? | Una frecuencia alta que aparece como una baja falsa por muestrear lento. |
-| ¿Dónde va el filtro antialiasing? | Antes del ADC, en hardware. |
-| ¿Para qué sirve la FFT? | Para ver qué frecuencias tiene la señal y dónde está el ruido. |
-| ¿Qué cuesta filtrar? | Retardo: la salida filtrada llega tarde. |
-| ¿GPIO 21 y 22? | I²C: 21 = SDA (datos), 22 = SCL (reloj). |
+| ADC | Convierte voltaje en un número: de 0 a 4095 con 12 bits. |
+| Canales | ADC1 tiene 8 (GPIO 32 a 39); ADC2 tiene 10. |
+| Wi-Fi | Con Wi-Fi encendido solo funciona el ADC1. |
+| Atenuación | Elige el rango de voltaje que mide el ADC; por defecto 11 dB. |
+| Nyquist | `fs > 2 · fmax`. |
+| Aliasing | Muestrear lento hace que una frecuencia alta aparezca como una baja falsa. |
+| Antialiasing | Va antes del ADC, en hardware (RC pasa bajos). |
+| FFT | Muestra qué frecuencias tiene la señal y dónde está el ruido. |
+| Filtrar | Gana estabilidad y menos ruido; pierde rapidez y los picos cortos reales. |
+| I²C | GPIO 21 = SDA (datos), GPIO 22 = SCL (reloj). |

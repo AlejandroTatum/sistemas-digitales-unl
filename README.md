@@ -58,9 +58,9 @@ Resúmenes propios de las clases (no forman parte de ninguna entrega), en dos fo
 
 Resúmenes propios de las clases (no forman parte de ninguna entrega). · [Ver todos →](unidad-2/apuntes)
 
-| Fecha | Tema | Resumen |
-| --- | --- | --- |
-| 24-nov | Señales, ADC y filtrado en el ESP32 | [MD](unidad-2/apuntes/01-senales-adc-y-filtros.md) |
+| Fecha | Tema | Resumen | Guía |
+| --- | --- | --- | --- |
+| 24-nov | Señales, ADC y filtrado en el ESP32 | [MD](unidad-2/apuntes/01-senales-adc-y-filtros.md) | [PDF](unidad-2/apuntes/pdf/01-senales-adc-y-filtros.pdf) |
 
 ---
 

@@ -6,12 +6,12 @@
 
 | Carpeta | Qué contiene |
 | --- | --- |
-| [apuntes/](apuntes) | Resúmenes de clase |
+| [apuntes/](apuntes) | Resúmenes de clase y guías de estudio |
 
 ## Apuntes de estudio
 
 Índice completo en [apuntes/](apuntes).
 
-| Fecha | Tema | Resumen |
-| --- | --- | --- |
-| 24-nov | Señales, ADC y filtrado en el ESP32 | [Markdown](apuntes/01-senales-adc-y-filtros.md) |
+| Fecha | Tema | Resumen | Guía PDF |
+| --- | --- | --- | --- |
+| 24-nov | Señales, ADC y filtrado en el ESP32 | [Markdown](apuntes/01-senales-adc-y-filtros.md) | [PDF](apuntes/pdf/01-senales-adc-y-filtros.pdf) |
