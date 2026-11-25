@@ -1,8 +1,8 @@
 # Clase del 24 de noviembre — Señales, ADC y filtrado en el ESP32
 
-> Unidad 2 · Apunte armado a partir de las [notas sueltas de la clase](notas-de-clase/2026-11-24.txt).
+> Unidad 2 · Apunte armado a partir de las [notas sueltas de la clase](notas-originales.txt) · [Guía PDF](senales-adc-y-filtros.pdf).
 
-[← Volver a los apuntes](README.md)
+[← Volver a los apuntes](../README.md)
 
 ## Idea central
 

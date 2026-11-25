@@ -58,9 +58,9 @@ Resúmenes propios de las clases (no forman parte de ninguna entrega), en dos fo
 
 Resúmenes propios de las clases (no forman parte de ninguna entrega). · [Ver todos →](unidad-2/apuntes)
 
-| Fecha | Tema | Resumen | Guía |
+| Clase | Tema | Resumen | Guía |
 | --- | --- | --- | --- |
-| 24-nov | Señales, ADC y filtrado en el ESP32 | [MD](unidad-2/apuntes/01-senales-adc-y-filtros.md) | [PDF](unidad-2/apuntes/pdf/01-senales-adc-y-filtros.pdf) |
+| [clase_2026-11-24](unidad-2/apuntes/clase_2026-11-24) | Señales, ADC y filtrado en el ESP32 | [MD](unidad-2/apuntes/clase_2026-11-24/senales-adc-y-filtros.md) | [PDF](unidad-2/apuntes/clase_2026-11-24/senales-adc-y-filtros.pdf) |
 
 ---
 
@@ -77,8 +77,8 @@ Resúmenes propios de las clases (no forman parte de ninguna entrega). · [Ver t
     │       ├── documento/           Informe (PDF y fuente editable)
     │       └── …                    Código, simulación y capturas
     └── apuntes/                     Material de estudio
-        ├── *.md                     Resúmenes por clase
-        └── pdf/                     Guías de estudio A4
+        ├── *.md, pdf/               Unidad 1: resúmenes por semana y guías A4
+        └── clase_AAAA-MM-DD/        Desde la Unidad 2: apunte, guía PDF, gráficos y notas de cada clase
 ```
 
 ## Herramientas

@@ -12,6 +12,6 @@
 
 Índice completo en [apuntes/](apuntes).
 
-| Fecha | Tema | Resumen | Guía PDF |
+| Clase | Tema | Apunte | Guía PDF |
 | --- | --- | --- | --- |
-| 24-nov | Señales, ADC y filtrado en el ESP32 | [Markdown](apuntes/01-senales-adc-y-filtros.md) | [PDF](apuntes/pdf/01-senales-adc-y-filtros.pdf) |
+| [clase_2026-11-24](apuntes/clase_2026-11-24) | Señales, ADC y filtrado en el ESP32 | [Markdown](apuntes/clase_2026-11-24/senales-adc-y-filtros.md) | [PDF](apuntes/clase_2026-11-24/senales-adc-y-filtros.pdf) |
