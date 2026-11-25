@@ -61,6 +61,7 @@ Resúmenes propios de las clases (no forman parte de ninguna entrega). · [Ver t
 | Clase | Tema | Resumen | Guía |
 | --- | --- | --- | --- |
 | [clase_2026-11-24](unidad-2/apuntes/clase_2026-11-24) | Señales, ADC y filtrado en el ESP32 | [MD](unidad-2/apuntes/clase_2026-11-24/senales-adc-y-filtros.md) | [PDF](unidad-2/apuntes/clase_2026-11-24/senales-adc-y-filtros.pdf) |
+| [clase_2026-11-25](unidad-2/apuntes/clase_2026-11-25) | Decibeles y pantallas LCD 16x2 | [MD](unidad-2/apuntes/clase_2026-11-25/decibeles-y-pantallas-lcd.md) | [PDF](unidad-2/apuntes/clase_2026-11-25/decibeles-y-pantallas-lcd.pdf) |
 
 ---
 

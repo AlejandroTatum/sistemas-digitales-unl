@@ -1,0 +1,5 @@
+Clase del 25 de noviembre de 2026 (sin notas escritas a mano).
+
+Temas indicados:
+- Decibeles en sistemas digitales.
+- Diapositivas del docente: S5_Pantallas_LCD_ESP32.pdf (Manejo de pantallas LCD 16x2, semana 5).
