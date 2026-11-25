@@ -1,0 +1,7 @@
+forier, acd, antileasing, bajar el ruido, señales analogica y digitales. filtros
+entrada ruidosa vs salida filtrada (valor ADC)-sufre retardo
+FTT
+atenuacion ADC1- 32 al 29
+ADC2- 10 canales
+GPIO 21 datos
+GPIO 22 reloj
